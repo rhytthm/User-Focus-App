@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Combine
 
 class FocusViewModel: ObservableObject {
     @Published var currentMode: FocusMode?
@@ -9,7 +10,9 @@ class FocusViewModel: ObservableObject {
     @Published var currentSession: FocusSession?
     
     private var timer: Timer?
+    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
     private let pointsInterval: TimeInterval = 120 // 2 minutes
+    private var cancellables = Set<AnyCancellable>()
     
     init() {
         // Load user profile from UserDefaults or create new one
@@ -20,12 +23,75 @@ class FocusViewModel: ObservableObject {
             self.userProfile = UserProfile(name: "User")
         }
         
-        // Check for active session
+        // Restore active session if exists
+        restoreActiveSession()
+        
+        // Setup notifications for app lifecycle
+        setupNotifications()
+    }
+    
+    private func setupNotifications() {
+        NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)
+            .sink { [weak self] _ in
+                self?.handleAppBackground()
+            }
+            .store(in: &cancellables)
+        
+        NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
+            .sink { [weak self] _ in
+                self?.handleAppForeground()
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func handleAppBackground() {
+        // Save the current timestamp when going to background
+        if isActive {
+            UserDefaults.standard.set(Date(), forKey: "lastBackgroundDate")
+            saveActiveSession()
+            
+            // Start background task
+            backgroundTask = UIApplication.shared.beginBackgroundTask { [weak self] in
+                self?.endBackgroundTask()
+            }
+        }
+    }
+    
+    private func handleAppForeground() {
+        if isActive {
+            // Calculate elapsed time while in background
+            if let lastBackgroundDate = UserDefaults.standard.object(forKey: "lastBackgroundDate") as? Date {
+                let backgroundDuration = Date().timeIntervalSince(lastBackgroundDate)
+                elapsedTime += backgroundDuration
+                
+                // Award points for background time
+                let pointsEarned = Int(backgroundDuration / pointsInterval)
+                if pointsEarned > 0 {
+                    awardPointsForBackgroundTime(pointsEarned)
+                }
+            }
+            
+            // Restart timer
+            startTimer()
+        }
+        
+        endBackgroundTask()
+    }
+    
+    private func endBackgroundTask() {
+        if backgroundTask != .invalid {
+            UIApplication.shared.endBackgroundTask(backgroundTask)
+            backgroundTask = .invalid
+        }
+    }
+    
+    private func restoreActiveSession() {
         if let data = UserDefaults.standard.data(forKey: "activeSession"),
            let session = try? JSONDecoder().decode(FocusSession.self, from: data) {
-            self.currentSession = session
-            self.currentMode = session.mode
-            self.elapsedTime = Date().timeIntervalSince(session.startTime)
+            currentSession = session
+            currentMode = session.mode
+            elapsedTime = Date().timeIntervalSince(session.startTime)
+            isActive = true
             startTimer()
         }
     }
@@ -61,6 +127,7 @@ class FocusViewModel: ObservableObject {
             saveUserProfile()
             currentSession = nil
             UserDefaults.standard.removeObject(forKey: "activeSession")
+            UserDefaults.standard.removeObject(forKey: "lastBackgroundDate")
         }
     }
     
@@ -70,7 +137,7 @@ class FocusViewModel: ObservableObject {
             guard let self = self else { return }
             self.elapsedTime += 1
             
-            // Award points and badges every 2 minutes
+            // Award points every 2 minutes
             if Int(self.elapsedTime) % Int(self.pointsInterval) == 0 {
                 self.awardPoints()
             }
@@ -87,6 +154,21 @@ class FocusViewModel: ObservableObject {
         let newBadge = Badge(emoji: badgeEmoji, type: badgeType)
         
         session.badges.append(newBadge)
+        currentSession = session
+        saveActiveSession()
+    }
+    
+    private func awardPointsForBackgroundTime(_ points: Int) {
+        guard var session = currentSession else { return }
+        
+        for _ in 0..<points {
+            session.points += 1
+            let badgeType = BadgeType.allCases.randomElement()!
+            let badgeEmoji = badgeType.badges.randomElement()!
+            let newBadge = Badge(emoji: badgeEmoji, type: badgeType)
+            session.badges.append(newBadge)
+        }
+        
         currentSession = session
         saveActiveSession()
     }
