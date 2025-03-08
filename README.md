@@ -11,6 +11,6 @@ This app has been made using SwiftUI. It has folowing features -
    Prefill the User name, and a User image and store it into the DB. 
 
 ## Demo Videos
-| Dark/Light mode  | Timer About to Complete |
+| Dark/Light mode  | Timer About to Complete & Edge case |
 | ------------- | ------------- |
-|<video src="https://github.com/user-attachments/assets/932ecff5-3293-44e0-81a0-f5867d901be8">|<video src="https://github.com/user-attachments/assets/5d4ab156-2a91-4753-920b-088c7f283d8b">|
+|<video src="https://github.com/user-attachments/assets/932ecff5-3293-44e0-81a0-f5867d901be8">|<video src="https://github.com/user-attachments/assets/aae47cb8-7a8a-41d9-8c66-63eb53b522af">|
