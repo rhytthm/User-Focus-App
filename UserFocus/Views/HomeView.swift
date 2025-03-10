@@ -17,7 +17,8 @@ struct HomeView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingProfile = true }) {
-                        Image(systemName: "person.circle")
+                        Image(systemName: "person.circle.fill")
+                            .font(.title2)
                     }
                 }
             }
@@ -35,24 +36,30 @@ struct HomeView: View {
             
             Text(viewModel.formatTime(viewModel.elapsedTime))
                 .font(.system(size: 60, weight: .bold, design: .monospaced))
+                .padding()
             
             if let session = viewModel.currentSession {
-                VStack(spacing: 10) {
+                VStack(spacing: 15) {
                     Text("Points: \(session.points)")
                         .font(.title2)
                     
-                    Text("Badges: \(session.badges.map { $0.emoji }.joined())")
-                        .font(.title2)
+                    if !session.badges.isEmpty {
+                        Text("Badges: \(session.badges.map { $0.emoji }.joined())")
+                            .font(.title2)
+                    }
                 }
+                .padding()
             }
             
             Button(action: { viewModel.stopFocus() }) {
                 Text("Stop Focusing")
-                    .font(.title3)
+                    .font(.headline)
                     .foregroundColor(.white)
                     .padding()
+                    .frame(maxWidth: .infinity)
                     .background(Color.red)
-                    .cornerRadius(10)
+                    .cornerRadius(15)
+                    .padding(.horizontal)
             }
         }
         .padding()
@@ -65,17 +72,18 @@ struct HomeView: View {
         ], spacing: 20) {
             ForEach(FocusMode.allCases, id: \.self) { mode in
                 Button(action: { viewModel.startFocus(mode: mode) }) {
-                    VStack {
+                    VStack(spacing: 15) {
                         Image(systemName: modeIcon(for: mode))
                             .font(.system(size: 40))
                         Text(mode.rawValue)
                             .font(.title2)
+                            .bold()
                     }
                     .frame(maxWidth: .infinity)
-                    .padding()
+                    .frame(height: 150)
                     .background(modeColor(for: mode))
                     .foregroundColor(.white)
-                    .cornerRadius(15)
+                    .cornerRadius(20)
                 }
             }
         }
