@@ -13,4 +13,8 @@ This app has been made using SwiftUI. It has folowing features -
 ## Demo Videos
 | Dark/Light mode  | Timer About to Complete & Edge case |
 | ------------- | ------------- |
-|<video src="https://github.com/user-attachments/assets/932ecff5-3293-44e0-81a0-f5867d901be8">|<video src="https://github.com/user-attachments/assets/aae47cb8-7a8a-41d9-8c66-63eb53b522af">|
+|<video src="https://github.com/user-attachments/assets/932ecff5-3293-44e0-81a0-f5867d901be8">|<video src="https://github.com/user-attachments/assets/58970b8c-cb7d-4dcf-bf35-1df98b3b7945">|
+
+
+
+
